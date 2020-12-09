@@ -60,6 +60,9 @@ func Trace(err error) error {
 	return err
 }
 
+// Errorf is an alias of fmt.Errorf
+var Errorf = fmt.Errorf
+
 // Cause returns the real underlying cause (by repeatly calling Unwrap until it returns nil)
 func Cause(err error) error {
 	for err != nil {
