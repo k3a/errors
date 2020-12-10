@@ -16,6 +16,10 @@ func TestTemporary(t *testing.T) {
 		t.Fatal("error wrapped in Temporary() must satisfy IsTemporary()")
 	}
 
+	if Cause(tempErr) != normalErr {
+		t.Fatalf("unwrap on a Temporary error should still work")
+	}
+
 	err := fmt.Errorf("temp err: %w", tempErr)
 	if !IsTemporary(err) {
 		t.Fatal("temporary error wrapped by fmt.Errorf() must still satisfy IsTemporary()")
