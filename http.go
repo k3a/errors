@@ -161,3 +161,12 @@ func HTTPServiceUnavailable(err error, msg string) error {
 func HTTPServiceUnavailablef(err error, template string, args ...interface{}) error {
 	return NewHTTPErrorf(err, http.StatusServiceUnavailable, template, args...)
 }
+
+func HTTPGone(err error, msg string) error {
+	return NewHTTPError(err, http.StatusGone, msg)
+
+}
+
+func HTTPGonef(err error, template string, args ...interface{}) error {
+	return NewHTTPErrorf(err, http.StatusGone, template, args...)
+}
