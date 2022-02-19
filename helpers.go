@@ -1,8 +1,10 @@
 package errors
 
 var (
-	ErrTemporary = New("temporary error ocurred")
-	ErrTimeout   = New("operation timed out")
+	// A simple static error satisfying IsTemporary
+	ErrTemporary = &temporaryErr{New("temporary error ocurred")}
+	// A simple static error satisfying IsTimeout
+	ErrTimeout = &timeoutErr{New("operation timed out")}
 )
 
 func unwrapIsFunc(err error, fn func(err error) bool) bool {
@@ -88,6 +90,7 @@ func If(err error, errConstruct func(error, string) error, msg string) error {
 }
 
 // Iff calls errConstruct if err is not nil with an optional template and template args passed to it.
+// This function is "format-capable" version of If.
 // Function pointer errConstruct can be nil, in which case an error is returned as-is.
 // For nil err, the function returns nil as well.
 // Example: return Iff(err, HTTPServiceUnavailable, "We are overloaded, please wait %d seconds", waitTime)
@@ -101,4 +104,15 @@ func Iff(err error, errConstruct func(error, string, ...interface{}) error, temp
 	}
 
 	return errConstruct(err, template, args...)
+}
+
+// UnwrapHTTPError unwraps err (if it is *HTTPError instance)
+// to find the deepest error of the type *HTTPError type
+// Returns nil if err is nil or not *HTTPError type
+func UnwrapHTTPError(err error) *HTTPError {
+	herr, _ := err.(*HTTPError)
+	if herr != nil {
+		return herr.UnwrapHTTPError()
+	}
+	return nil
 }
