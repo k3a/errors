@@ -2,9 +2,9 @@ package errors
 
 var (
 	// A simple static error satisfying IsTemporary
-	ErrTemporary = &temporaryErr{New("temporary error ocurred")}
+	ErrTemporary = &temporaryErr{internalErr{New("temporary error ocurred")}}
 	// A simple static error satisfying IsTimeout
-	ErrTimeout = &timeoutErr{New("operation timed out")}
+	ErrTimeout = &timeoutErr{internalErr{New("operation timed out")}}
 )
 
 func unwrapIsFunc(err error, fn func(err error) bool) bool {
@@ -17,8 +17,18 @@ func unwrapIsFunc(err error, fn func(err error) bool) bool {
 	return false
 }
 
-type temporaryErr struct {
+type internalErr struct {
 	error
+}
+
+func (h internalErr) SkipInternalErr() error { return h.error }
+
+type internalErrProvider interface {
+	SkipInternalErr() error
+}
+
+type temporaryErr struct {
+	internalErr
 }
 
 func (e *temporaryErr) Temporary() bool {
@@ -34,7 +44,7 @@ func Temporary(err error) error {
 	if err == nil {
 		err = ErrTemporary
 	}
-	return &temporaryErr{err}
+	return &temporaryErr{internalErr{err}}
 }
 
 // IsTemporary returns true if a wrapped error implements Temporary() bool and it returns true
@@ -46,7 +56,7 @@ func IsTemporary(err error) bool {
 }
 
 type timeoutErr struct {
-	error
+	internalErr
 }
 
 func (e *timeoutErr) Timeout() bool {
@@ -62,7 +72,7 @@ func Timeout(err error) error {
 	if err == nil {
 		err = ErrTimeout
 	}
-	return &timeoutErr{err}
+	return &timeoutErr{internalErr{err}}
 }
 
 // IsTimeout returns true if a wrapped error implements Timeout() bool and it returns true
@@ -110,8 +120,7 @@ func Iff(err error, errConstruct func(error, string, ...interface{}) error, temp
 // to find the deepest error of the type *HTTPError type
 // Returns nil if err is nil or not *HTTPError type
 func UnwrapHTTPError(err error) *HTTPError {
-	herr, _ := err.(*HTTPError)
-	if herr != nil {
+	if herr, ok := err.(*HTTPError); ok {
 		return herr.UnwrapHTTPError()
 	}
 	return nil

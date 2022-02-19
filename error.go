@@ -19,8 +19,8 @@ func New(text string) error {
 }
 
 type wrapError struct {
+	internalErr
 	msg string
-	err error
 }
 
 func (e *wrapError) Error() string {
@@ -28,7 +28,7 @@ func (e *wrapError) Error() string {
 }
 
 func (e *wrapError) Unwrap() error {
-	return e.err
+	return e.error
 }
 
 // Annotate is used to add extra context to an existing error (inspired by juju/errors)
@@ -37,9 +37,11 @@ func Annotate(err error, msg string) error {
 		return nil
 	}
 
+	//TODO: tracing not implemented yet
+
 	return &wrapError{
-		msg: msg + ": " + err.Error(),
-		err: err,
+		internalErr: internalErr{err},
+		msg:         msg + ": " + err.Error(),
 	}
 }
 
@@ -49,14 +51,17 @@ func Annotatef(err error, format string, args ...interface{}) error {
 		return nil
 	}
 
+	//TODO: tracing not implemented yet
+
 	return &wrapError{
-		msg: fmt.Sprintf(format, args...) + ": " + err.Error(),
-		err: err,
+		internalErr: internalErr{err},
+		msg:         fmt.Sprintf(format, args...) + ": " + err.Error(),
 	}
 }
 
 // Trace adds the location of the Trace call to the stack (inspired by juju/errors)
 func Trace(err error) error {
+	//TODO: not implemented yet
 	return err
 }
 

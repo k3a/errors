@@ -3,6 +3,7 @@ package errors
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -48,10 +49,19 @@ func TestUnwrapHTTPError(t *testing.T) {
 	// 1. initial error spotted and was assigned a user-facing error
 	err = HTTPNotFound(err, "Could not find the item in the database")
 
-	// 2. a parent function also testing for an error, assigning more generic
+	// 2. optionally some annotations are added which are ignored by UnwrapHTTPError
+	err = Annotatef(err, "while user %d tried to access document %s", 123, "doc123")
+
+	// 3. a parent function also testing for an error, assigning more generic
 	// internal server error with no custom message
-	if err != nil {
-		err = HTTPInternalServerError(err, "")
+	err = HTTPInternalServerError(err, "")
+
+	var topmostHTTPError *HTTPError
+	if As(err, &topmostHTTPError) {
+		errStr := topmostHTTPError.Internal.Error()
+		if !strings.HasPrefix(errStr, "while user ") {
+			t.Fatalf("Internal error of the newest/topmost HTTPError in the chain should include annotations; Returned error string was '%v'", errStr)
+		}
 	}
 
 	// UnwrapHTTPError can get HTTPError-typed cause
@@ -61,6 +71,11 @@ func TestUnwrapHTTPError(t *testing.T) {
 	}
 
 	if herr.Message != "Could not find the item in the database" {
-		t.Fatal("UnwrapHTTPError must return the deepest *HTTPError type")
+		t.Fatalf("UnwrapHTTPError must return the deepest/oldest *HTTPError type; it returned %v", herr)
+	}
+
+	cause := Cause(err)
+	if cause != sql.ErrNoRows {
+		t.Fatalf("cause must always return real internal cause (deepest/oldest error in the chain); returned %v instead", cause)
 	}
 }

@@ -36,9 +36,15 @@ func (e *HTTPError) Unwrap() error {
 // It may return the same error e or another *HTTPError instance.
 func (e *HTTPError) UnwrapHTTPError() *HTTPError {
 	err := e.Internal
-	if err != nil {
-		if err, ok := err.(*HTTPError); ok {
-			return err.UnwrapHTTPError()
+	for err != nil {
+		if ierr, ok := err.(internalErrProvider); ok {
+			// skip types internal to this package
+			err = ierr.SkipInternalErr()
+		} else if herr, ok := err.(*HTTPError); ok {
+			// go deeper
+			return herr.UnwrapHTTPError()
+		} else {
+			return e
 		}
 	}
 	return e
