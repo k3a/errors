@@ -17,16 +17,6 @@ func unwrapIsFunc(err error, fn func(err error) bool) bool {
 	return false
 }
 
-type internalErr struct {
-	error
-}
-
-func (h internalErr) SkipInternalErr() error { return h.error }
-
-type internalErrProvider interface {
-	SkipInternalErr() error
-}
-
 type temporaryErr struct {
 	internalErr
 }

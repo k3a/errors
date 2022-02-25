@@ -7,6 +7,8 @@ import (
 
 // HTTPError holds public-facing error message, with optional
 type HTTPError struct {
+	programCounter
+
 	Code    int    `json:"code"`
 	Message string `json:"error"`
 
@@ -50,150 +52,161 @@ func (e *HTTPError) UnwrapHTTPError() *HTTPError {
 	return e
 }
 
-// HTTP creates a new HTTP error with http status code and message,
-// wrapping an optional intenral error as well.
-// If msg is empty, http.StatusText for the code is used.
-func HTTP(err error, code int, msg string) error {
+func httpErr(err error, code int, msg string) error {
 	if msg == "" {
 		msg = http.StatusText(code)
 	}
 
 	return &HTTPError{
-		Code:     code,
-		Message:  msg,
-		Internal: err,
+		programCounter: callerPC(4),
+		Code:           code,
+		Message:        msg,
+		Internal:       err,
 	}
+}
+
+// HTTP creates a new httpErr error with http status code and message,
+// wrapping an optional intenral error as well.
+// If msg is empty, http.StatusText for the code is used.
+func HTTP(err error, code int, msg string) error {
+	return httpErr(err, code, msg)
 }
 
 // NewHTTPError is a deprecated alias of HTTP
-var NewHTTPError = HTTP
+func NewHTTPError(err error, code int, msg string) error {
+	return httpErr(err, code, msg)
+}
 
-// HTTP creates a new HTTP error with http status code and formatted message,
-// wrapping an optional intenral error as well.
-func HTTPf(err error, code int, template string, args ...interface{}) error {
+func httpErrf(err error, code int, template string, args ...interface{}) error {
 	return &HTTPError{
-		Code:     code,
-		Message:  fmt.Sprintf(template, args...),
-		Internal: err,
+		programCounter: callerPC(4),
+		Code:           code,
+		Message:        fmt.Sprintf(template, args...),
+		Internal:       err,
 	}
 }
 
+// HTTPf creates a new HTTP error with http status code and formatted message,
+// wrapping an optional intenral error as well.
+func HTTPf(err error, code int, template string, args ...interface{}) error {
+	return httpErrf(err, code, template, args...)
+}
+
 // NewHTTPErrorf is a deprecated alias of HTTPf
-var NewHTTPErrorf = HTTPf
+var NewHTTPErrorf = httpErrf
 
 func HTTPUnsupportedMediaType(err error, msg string) error {
-	return HTTP(err, http.StatusUnsupportedMediaType, msg)
+	return httpErr(err, http.StatusUnsupportedMediaType, msg)
 
 }
 
 func HTTPUnsupportedMediaTypef(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusUnsupportedMediaType, template, args...)
+	return httpErrf(err, http.StatusUnsupportedMediaType, template, args...)
 }
 
 func HTTPNotFound(err error, msg string) error {
-	return HTTP(err, http.StatusNotFound, msg)
-
+	return httpErr(err, http.StatusNotFound, msg)
 }
 
 func HTTPNotFoundf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusNotFound, template, args...)
+	return httpErrf(err, http.StatusNotFound, template, args...)
 }
 
 func HTTPUnauthorized(err error, msg string) error {
-	return HTTP(err, http.StatusUnauthorized, msg)
+	return httpErr(err, http.StatusUnauthorized, msg)
 
 }
 
 func HTTPUnauthorizedf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusUnauthorized, template, args...)
+	return httpErrf(err, http.StatusUnauthorized, template, args...)
 }
 
 func HTTPForbidden(err error, msg string) error {
-	return HTTP(err, http.StatusForbidden, msg)
+	return httpErr(err, http.StatusForbidden, msg)
 
 }
 
 func HTTPForbiddenf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusForbidden, template, args...)
+	return httpErrf(err, http.StatusForbidden, template, args...)
 }
 
 func HTTPMethodNotAllowed(err error, msg string) error {
-	return HTTP(err, http.StatusMethodNotAllowed, msg)
+	return httpErr(err, http.StatusMethodNotAllowed, msg)
 
 }
 
 func HTTPMethodNotAllowedf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusMethodNotAllowed, template, args...)
+	return httpErrf(err, http.StatusMethodNotAllowed, template, args...)
 }
 
 func HTTPRequestEntityTooLarge(err error, msg string) error {
-	return HTTP(err, http.StatusRequestEntityTooLarge, msg)
+	return httpErr(err, http.StatusRequestEntityTooLarge, msg)
 
 }
 
 func HTTPRequestEntityTooLargef(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusRequestEntityTooLarge, template, args...)
+	return httpErrf(err, http.StatusRequestEntityTooLarge, template, args...)
 }
 
 func HTTPTooManyRequests(err error, msg string) error {
-	return HTTP(err, http.StatusTooManyRequests, msg)
+	return httpErr(err, http.StatusTooManyRequests, msg)
 
 }
 
 func HTTPTooManyRequestsf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusTooManyRequests, template, args...)
+	return httpErrf(err, http.StatusTooManyRequests, template, args...)
 }
 
 func HTTPBadRequest(err error, msg string) error {
-	return HTTP(err, http.StatusBadRequest, msg)
+	return httpErr(err, http.StatusBadRequest, msg)
 
 }
 
 func HTTPBadRequestf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusBadRequest, template, args...)
+	return httpErrf(err, http.StatusBadRequest, template, args...)
 }
 
 func HTTPBadGateway(err error, msg string) error {
-	return HTTP(err, http.StatusBadGateway, msg)
+	return httpErr(err, http.StatusBadGateway, msg)
 
 }
 
 func HTTPBadGatewayf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusBadGateway, template, args...)
+	return httpErrf(err, http.StatusBadGateway, template, args...)
 }
 
 func HTTPInternalServerError(err error, msg string) error {
-	return HTTP(err, http.StatusInternalServerError, msg)
+	return httpErr(err, http.StatusInternalServerError, msg)
 
 }
 
 func HTTPInternalServerErrorf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusInternalServerError, template, args...)
+	return httpErrf(err, http.StatusInternalServerError, template, args...)
 }
 
 func HTTPRequestTimeout(err error, msg string) error {
-	return HTTP(err, http.StatusRequestTimeout, msg)
+	return httpErr(err, http.StatusRequestTimeout, msg)
 
 }
 
 func HTTPRequestTimeoutf(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusRequestTimeout, template, args...)
+	return httpErrf(err, http.StatusRequestTimeout, template, args...)
 }
 
 func HTTPServiceUnavailable(err error, msg string) error {
-	return HTTP(err, http.StatusServiceUnavailable, msg)
+	return httpErr(err, http.StatusServiceUnavailable, msg)
 
 }
 
 func HTTPServiceUnavailablef(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusServiceUnavailable, template, args...)
+	return httpErrf(err, http.StatusServiceUnavailable, template, args...)
 }
 
 func HTTPGone(err error, msg string) error {
-	return HTTP(err, http.StatusGone, msg)
+	return httpErr(err, http.StatusGone, msg)
 
 }
 
 func HTTPGonef(err error, template string, args ...interface{}) error {
-	return HTTPf(err, http.StatusGone, template, args...)
+	return httpErrf(err, http.StatusGone, template, args...)
 }
