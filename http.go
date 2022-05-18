@@ -35,7 +35,7 @@ func (e *HTTPError) Unwrap() error {
 // If there is multiple *HTTPError instances in the error chain, this function
 // returns the first one (the deepest one) in an attempt to reveal the root cause
 // of the error presentable to the user.
-// It may return the same error e or another *HTTPError instance.
+// It may return the same or another *HTTPError instance.
 func (e *HTTPError) UnwrapHTTPError() *HTTPError {
 	err := e.Internal
 	for err != nil {

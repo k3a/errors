@@ -3,7 +3,10 @@ package errors
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 )
 
 // stringError is a simple error containing just an error string and PC
@@ -31,6 +34,11 @@ type internalErr struct {
 }
 
 func (h internalErr) SkipInternalErr() error { return h.error }
+
+// Unwrap satisfies the Go 1.13 error wrapper interface to access internal error
+func (h internalErr) Unwrap() error {
+	return h.error
+}
 
 type internalErrProvider interface {
 	SkipInternalErr() error
@@ -73,10 +81,6 @@ type wrapError struct {
 
 func (e *wrapError) Error() string {
 	return e.msg
-}
-
-func (e *wrapError) Unwrap() error {
-	return e.error
 }
 
 // Annotate is used to add extra context to an existing error (inspired by juju/errors)
@@ -132,4 +136,29 @@ func Cause(err error) error {
 	}
 
 	return nil
+}
+
+// Backtrace attempts to create a backtrace of the error chain.
+// May return an empty string if no error provides PC (program counter) info.
+func Backtrace(err error) string {
+	str := ""
+
+	for err != nil {
+		if e, ok := err.(ErrorWithPC); ok {
+			if len(str) > 0 {
+				str += " "
+			}
+			funcName := filepath.Base(e.FuncName())
+			funcNameParts := strings.Split(funcName, ".")
+			funcName = funcNameParts[len(funcNameParts)-1]
+
+			file, line := e.FileLine()
+			file = filepath.Base(file)
+
+			str += "[" + funcName + " " + file + ":" + strconv.Itoa(line) + "]"
+		}
+		err = Unwrap(err)
+	}
+
+	return str
 }

@@ -78,4 +78,17 @@ func TestUnwrapHTTPError(t *testing.T) {
 	if cause != sql.ErrNoRows {
 		t.Fatalf("cause must always return real internal cause (deepest/oldest error in the chain); returned %v instead", cause)
 	}
+
+	// backtrace
+	bt := Backtrace(err)
+	numTraces := 0
+	for _, s := range bt {
+		if s == '[' {
+			numTraces++
+		}
+	}
+
+	if numTraces != 3 {
+		t.Fatal("expected 3 traces in Backtrace")
+	}
 }

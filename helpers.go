@@ -25,10 +25,6 @@ func (e *temporaryErr) Temporary() bool {
 	return true
 }
 
-func (e *temporaryErr) Unwrap() error {
-	return e.error
-}
-
 // Temporary creates a new error satisfying IsTemporary
 func Temporary(err error) error {
 	if err == nil {
@@ -51,10 +47,6 @@ type timeoutErr struct {
 
 func (e *timeoutErr) Timeout() bool {
 	return true
-}
-
-func (e *timeoutErr) Unwrap() error {
-	return e.error
 }
 
 // Timeout creates a new error satisfying IsTimeout
